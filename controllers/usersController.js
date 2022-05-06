@@ -2,6 +2,7 @@ import db from "../db.js";
 
 import { stripHtml } from "string-strip-html";
 import joi from "joi";
+import bcrypt from 'bcrypt';
 
 export async function signUpUser(req, res) {
     const user = req.body;
@@ -13,7 +14,7 @@ export async function signUpUser(req, res) {
         repeat_password: joi.ref('password'),
     });
     
-    const validation = userSchema.validate(sanitizedUser);
+    const validation = userSchema.validate(user);
     if (validation.error) {
         res.status(422).send(validation.error.details);
         return;
@@ -35,7 +36,7 @@ export async function signUpUser(req, res) {
             return;
         }
 
-        await db.collection("users").insertOne({ name, email, password });
+        await db.collection("users").insertOne({ name, email, password: bcrypt.hashSync(password, 10) });
         res.status(201).send("Successfully signed up!");
     } catch (e) {
         res.status(500).send(e);
@@ -44,8 +45,25 @@ export async function signUpUser(req, res) {
 
 export async function signInUser(req, res) {
     const user = req.body;
-    const { email, password } = user;
 
+    const userSchema = joi.object({
+        email: joi.string().required().email({ minDomainSegments: 2, tlds: { allow: ['com', 'net'] } }),
+        password: joi.string().required()
+    });
+
+    const validation = userSchema.validate(user);
+    if (validation.error) {
+        res.status(422).send(validation.error.details);
+        return;
+    }
+
+    const sanitizedUser = {
+        ...user,
+        email: stripHtml(user.email).result,
+        password: stripHtml(user.password).result
+    }
+
+    const { email, password } = sanitizedUser;
     try {
         const thereIsUser = await db.collection("users").findOne({ email });
         if (!thereIsUser) {
@@ -53,12 +71,13 @@ export async function signInUser(req, res) {
             return;
         }
 
-        if (thereIsUser.password !== password) {
+        const isPasswordValid = bcrypt.compareSync(password, thereIsUser.password);
+        if (!isPasswordValid) {
             res.sendStatus(401);
-            return;
+            return
         }
 
-        await db.collection("signed-in").insertOne({ email, password });
+        await db.collection("signed_in").insertOne({ email });
         res.status(200).send(thereIsUser.name);
     } catch (e) {
         res.status(500).send(e);

@@ -41,3 +41,26 @@ export async function signUpUser(req, res) {
         res.status(500).send(e);
     }
 }
+
+export async function signInUser(req, res) {
+    const user = req.body;
+    const { email, password } = user;
+
+    try {
+        const thereIsUser = await db.collection("users").findOne({ email });
+        if (!thereIsUser) {
+            res.status(404).send("User was not found!");
+            return;
+        }
+
+        if (thereIsUser.password !== password) {
+            res.sendStatus(401);
+            return;
+        }
+
+        await db.collection("signed-in").insertOne({ email, password });
+        res.status(200).send(thereIsUser.name);
+    } catch (e) {
+        res.status(500).send(e);
+    }
+}

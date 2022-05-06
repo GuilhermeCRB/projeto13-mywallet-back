@@ -1,8 +1,6 @@
 import express, { json } from "express";
 import { MongoClient } from "mongodb";
-import Joi from "joi";
 import cors from "cors";
-import { stripHtml } from "string-strip-html";
 import dotenv from "dotenv";
 import chalk from "chalk";
 

@@ -3,6 +3,7 @@ import db from "./../db.js";
 import { ObjectId } from "mongodb";
 import { stripHtml } from "string-strip-html";
 import joi from "joi";
+import dayjs from "dayjs";
 import chalk from "chalk";
 
 export async function recordInput(req, res) {
@@ -41,9 +42,16 @@ export async function recordInput(req, res) {
         description: stripHtml(input.description).result,
     }
 
-    const { type, value, description } = sanitizedInput;
+    const { type, value, description, date } = sanitizedInput;
     try {
-        await db.collection(`inputs_from_${userId}`).insertOne({ type, value, description });
+        await db.collection(`inputs_from_${userId}`).insertOne(
+            {
+                type,
+                value,
+                description,
+                date: new dayjs().format("DD/MM")
+            }
+        );
         res.status(201).send(`${type} created!`);
     } catch (e) {
         res.status(500).send(e);

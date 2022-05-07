@@ -3,6 +3,6 @@ import { recordInput } from "../controllers/recordsController.js";
 
 const recordsRouter = Router();
 
-recordsRouter.post("/add-records", recordInput);
+recordsRouter.post("/add-records/:userId", recordInput);
 
 export default recordsRouter;

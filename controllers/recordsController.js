@@ -1,10 +1,13 @@
 import db from "./../db.js";
 
+import { ObjectId } from "mongodb";
+import { stripHtml } from "string-strip-html";
 import joi from "joi";
 import chalk from "chalk";
 
 export async function recordInput(req, res) {
     const { authorization } = req.headers;
+    const { userId } = req.params;
     const input = req.body;
 
     const token = authorization?.replace("Bearer", "").trim();
@@ -14,13 +17,12 @@ export async function recordInput(req, res) {
         const isThereSession = await db.collection("sessions").findOne({ token });
         if (!isThereSession) return res.status(401).send("Token is invalid.");
 
-        const session = isThereSession;
-        const user = await db.collection("users").findOne({ _id: session.userId });
+        const user = await db.collection("users").findOne({ _id: ObjectId(userId) });
         if (!user) return res.status(404).send("User not found");
 
     } catch (error) {
-        console.log(chalk.red.bold("Error when checking token: \n"), error);
-        res.status(500).send("Error when checking token.");
+        console.log(chalk.red.bold("Error when checking token or user: \n"), error);
+        res.status(500).send("Error when checking token or user.");
     }
 
     const inputSchema = joi.object({
@@ -41,7 +43,8 @@ export async function recordInput(req, res) {
 
     const { type, value, description } = sanitizedInput;
     try {
-        console.log(1);
+        await db.collection(`inputs_from_${userId}`).insertOne({ type, value, description });
+        res.status(201).send(`${type} created!`);
     } catch (e) {
         res.status(500).send(e);
     }

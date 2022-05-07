@@ -78,7 +78,8 @@ export async function getInputs(req, res) {
     }
 
     try {
-        console.log(1);
+        const inputsList = await db.collection(`inputs_from_${userId}`).find().toArray();
+        res.status(200).send(inputsList);
     }catch(e){
         res.status(500).send(e);
     }

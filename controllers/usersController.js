@@ -3,6 +3,7 @@ import db from "../db.js";
 import { stripHtml } from "string-strip-html";
 import joi from "joi";
 import bcrypt from 'bcrypt';
+import {v4 as uuid} from "uuid";
 
 export async function signUpUser(req, res) {
     const user = req.body;
@@ -15,10 +16,7 @@ export async function signUpUser(req, res) {
     });
     
     const validation = userSchema.validate(user);
-    if (validation.error) {
-        res.status(422).send(validation.error.details);
-        return;
-    }
+    if (validation.error) return res.status(422).send(validation.error.details);
     
     const sanitizedUser = {
         ...user,
@@ -31,10 +29,7 @@ export async function signUpUser(req, res) {
     const { name, email, password } = sanitizedUser;
     try {
         const thereIsUser = await db.collection("users").findOne({ email });
-        if (thereIsUser) {
-            res.status(409).send("E-mail is already in use, please try a different one!");
-            return;
-        }
+        if (thereIsUser) return res.status(409).send("E-mail is already in use, please try a different one!");
 
         await db.collection("users").insertOne({ name, email, password: bcrypt.hashSync(password, 10) });
         res.status(201).send("Successfully signed up!");
@@ -52,10 +47,7 @@ export async function signInUser(req, res) {
     });
 
     const validation = userSchema.validate(user);
-    if (validation.error) {
-        res.status(422).send(validation.error.details);
-        return;
-    }
+    if (validation.error) return res.status(422).send(validation.error.details);
 
     const sanitizedUser = {
         ...user,
@@ -66,19 +58,15 @@ export async function signInUser(req, res) {
     const { email, password } = sanitizedUser;
     try {
         const thereIsUser = await db.collection("users").findOne({ email });
-        if (!thereIsUser) {
-            res.status(404).send("User was not found!");
-            return;
-        }
+        if (!thereIsUser) return res.status(404).send("User was not found!");
 
         const isPasswordValid = bcrypt.compareSync(password, thereIsUser.password);
-        if (!isPasswordValid) {
-            res.sendStatus(401);
-            return
-        }
+        if (!isPasswordValid) return res.sendStatus(401);
 
-        await db.collection("signed_in").insertOne({ email });
-        res.status(200).send(thereIsUser.name);
+        const token = uuid();
+
+        await db.collection("sessions").insertOne({ userId: thereIsUser._id, token });
+        res.status(200).send(token);
     } catch (e) {
         res.status(500).send(e);
     }

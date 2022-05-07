@@ -23,7 +23,7 @@ export async function recordInput(req, res) {
 
     } catch (error) {
         console.log(chalk.red.bold("Error when checking token or user: \n"), error);
-        res.status(500).send("Error when checking token or user.");
+        return res.status(500).send("Error when checking token or user.");
     }
 
     const inputSchema = joi.object({
@@ -56,4 +56,31 @@ export async function recordInput(req, res) {
     } catch (e) {
         res.status(500).send(e);
     }
+}
+
+export async function getInputs(req, res) {
+    const { authorization } = req.headers;
+    const { userId } = req.params;
+
+    const token = authorization?.replace("Bearer", "").trim();
+    if (!token) return res.status(401).send("Must send a token.");
+
+    try {
+        const isThereSession = await db.collection("sessions").findOne({ token });
+        if (!isThereSession) return res.status(401).send("Token is invalid.");
+
+        const user = await db.collection("users").findOne({ _id: ObjectId(userId) });
+        if (!user) return res.status(404).send("User not found");
+
+    } catch (error) {
+        console.log(chalk.red.bold("Error when checking token or user: \n"), error);
+        return res.status(500).send("Error when checking token or user.");
+    }
+
+    try {
+        console.log(1);
+    }catch(e){
+        res.status(500).send(e);
+    }
+
 }

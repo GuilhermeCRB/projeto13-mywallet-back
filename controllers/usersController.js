@@ -16,7 +16,7 @@ export async function signUpUser(req, res) {
     });
     
     const validation = userSchema.validate(user);
-    if (validation.error) return res.status(422).send(validation.error.details);
+    if (validation.error) return res.status(422).send("Input is invalid!");
     
     const sanitizedUser = {
         ...user,
@@ -27,6 +27,7 @@ export async function signUpUser(req, res) {
     }
     
     const { name, email, password } = sanitizedUser;
+    // const { name, email, password } = user;
     try {
         const thereIsUser = await db.collection("users").findOne({ email });
         if (thereIsUser) return res.status(409).send("E-mail is already in use, please try a different one!");
@@ -64,9 +65,9 @@ export async function signInUser(req, res) {
         if (!isPasswordValid) return res.sendStatus(401);
 
         const token = uuid();
-
-        await db.collection("sessions").insertOne({ userId: thereIsUser._id, token });
-        res.status(200).send(token);
+        const user = thereIsUser;
+        await db.collection("sessions").insertOne({ userId: user._id, token });
+        res.status(200).send({token, userId: user._id, userName: user.name});
     } catch (e) {
         res.status(500).send(e);
     }

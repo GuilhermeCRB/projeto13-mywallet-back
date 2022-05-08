@@ -11,7 +11,7 @@ try {
   db = mongoClient.db(process.env.DATABASE_NAME);
   console.log(chalk.green.bold(`\nConnection with database ${chalk.blue.bold(`${db.s.namespace}`)} stablished! \n`));
 } catch(e) {
-    console.log(chalk.red.bold(`\nWARNING: connection with database ${chalk.blue.bold(`${db.s.namespace}`)} failed! \nError: \n`), e);
+    console.log(chalk.red.bold(`\nWARNING: connection with database failed! \nError: \n`), e);
 }
 
 export default db;

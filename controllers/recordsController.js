@@ -59,6 +59,7 @@ export async function recordInput(req, res) {
 }
 
 export async function getInputs(req, res) {
+    console.log("chegou uma")
     const { authorization } = req.headers;
     const { userId } = req.params;
 

@@ -28,7 +28,7 @@ export async function recordInput(req, res) {
 
     const inputSchema = joi.object({
         type: joi.string().required(),
-        value: joi.number().required(), //TODO: set format ...000.00
+        value: joi.string().pattern(new RegExp('^[0-9]{1,},[0-9]{2}$')).required(),
         description: joi.string().required()
     });
 
@@ -59,7 +59,6 @@ export async function recordInput(req, res) {
 }
 
 export async function getInputs(req, res) {
-    console.log("chegou uma")
     const { authorization } = req.headers;
     const { userId } = req.params;
 
